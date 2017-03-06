@@ -729,7 +729,7 @@ check_deps = rule(
 
 # Helper to build a dynamic library (.so) from the sources containing
 # implementations of custom ops and kernels.
-def tf_custom_op_library(name, srcs=[], gpu_srcs=[], deps=[]):
+def tf_custom_op_library(name, srcs=[], gpu_srcs=[], deps=[], hdrs=[]):
   cuda_deps = [
       "//tensorflow/core:stream_executor_headers_lib",
       "@local_config_cuda//cuda:cudart_static",
@@ -740,6 +740,7 @@ def tf_custom_op_library(name, srcs=[], gpu_srcs=[], deps=[]):
     native.cc_library(
         name = basename + "_gpu",
         srcs = gpu_srcs,
+        hdrs = hdrs,
         copts = _cuda_copts(),
         deps = deps + if_cuda(cuda_deps))
     cuda_deps.extend([":" + basename + "_gpu"])
@@ -750,7 +751,7 @@ def tf_custom_op_library(name, srcs=[], gpu_srcs=[], deps=[]):
                               "//tensorflow/core:lib"])
 
   native.cc_binary(name=name,
-                   srcs=srcs,
+                   srcs=srcs+hdrs,
                    deps=deps + if_cuda(cuda_deps),
                    data=[name + "_check_deps"],
                    copts=tf_copts(),
