@@ -40,7 +40,7 @@ class QuantizeAndDequantizeTest : public OpsTestBase {};
 // Convert a simple scalar tensor.
 TEST_F(QuantizeAndDequantizeTest, Convert_scalar_tensor) {
   TF_ASSERT_OK(
-      NodeDefBuilder("quantize_and_dequantize_op", "QuantizeAndDequantize")
+      NodeDefBuilder("quantize_and_dequantize_op", "QuantizeAndDequantizeV2")
           .Input(FakeInput(DT_FLOAT))
           .Input(FakeInput(DT_FLOAT))
           .Input(FakeInput(DT_FLOAT))
@@ -57,12 +57,16 @@ TEST_F(QuantizeAndDequantizeTest, Convert_scalar_tensor) {
   Tensor expected(allocator(), DT_FLOAT, TensorShape({1}));
   test::FillValues<float>(&expected, {-3.5});
   test::ExpectTensorEqual<float>(expected, *GetOutput(0));
+
+  // Ensure that the inputs haven't been changed.
+  EXPECT_EQ(inputs_[1]->scalar<float>()(), 0.0);
+  EXPECT_EQ(inputs_[2]->scalar<float>()(), 0.0);
 }
 
 // Convert a 1D tensor with signed 8 bits.
 TEST_F(QuantizeAndDequantizeTest, Convert_1D_tensor_with_int8) {
   TF_ASSERT_OK(
-      NodeDefBuilder("quantize_and_dequantize_op", "QuantizeAndDequantize")
+      NodeDefBuilder("quantize_and_dequantize_op", "QuantizeAndDequantizeV2")
           .Input(FakeInput(DT_FLOAT))
           .Input(FakeInput(DT_FLOAT))
           .Input(FakeInput(DT_FLOAT))
@@ -83,12 +87,16 @@ TEST_F(QuantizeAndDequantizeTest, Convert_1D_tensor_with_int8) {
   test::FillValues<float>(
       &expected, {-1, -63.0 / 127, 0, 38.0 / 127, 102.0 / 127, 70.0 / 127});
   test::ExpectTensorNear<float>(expected, *GetOutput(0), 1e-5);
+
+  // Ensure that the inputs haven't been changed.
+  EXPECT_EQ(inputs_[1]->scalar<float>()(), 0.0);
+  EXPECT_EQ(inputs_[2]->scalar<float>()(), 0.0);
 }
 
 // Convert a 1D tensor with signed 4 bits.
 TEST_F(QuantizeAndDequantizeTest, Convert_1D_tensor_with_int4) {
   TF_ASSERT_OK(
-      NodeDefBuilder("quantize_and_dequantize_op", "QuantizeAndDequantize")
+      NodeDefBuilder("quantize_and_dequantize_op", "QuantizeAndDequantizeV2")
           .Input(FakeInput(DT_FLOAT))
           .Input(FakeInput(DT_FLOAT))
           .Input(FakeInput(DT_FLOAT))
@@ -108,12 +116,16 @@ TEST_F(QuantizeAndDequantizeTest, Convert_1D_tensor_with_int4) {
   test::FillValues<float>(&expected,
                           {-1, -3.0 / 7, 0, 2.0 / 7, 6.0 / 7, 4.0 / 7});
   test::ExpectTensorNear<float>(expected, *GetOutput(0), 1e-5);
+
+  // Ensure that the inputs haven't been changed.
+  EXPECT_EQ(inputs_[1]->scalar<float>()(), 0.0);
+  EXPECT_EQ(inputs_[2]->scalar<float>()(), 0.0);
 }
 
 // Convert a 2D tensor with signed 8 bits with given range.
 TEST_F(QuantizeAndDequantizeTest, Convert_2D_tensor_with_int8_range_given) {
   TF_ASSERT_OK(
-      NodeDefBuilder("quantize_and_dequantize_op", "QuantizeAndDequantize")
+      NodeDefBuilder("quantize_and_dequantize_op", "QuantizeAndDequantizeV2")
           .Input(FakeInput(DT_FLOAT))
           .Input(FakeInput(DT_FLOAT))
           .Input(FakeInput(DT_FLOAT))
@@ -142,7 +154,7 @@ TEST_F(QuantizeAndDequantizeTest, Convert_2D_tensor_with_int8_range_given) {
 // Convert a 4D tensor with unsigned 8 bits with given range.
 TEST_F(QuantizeAndDequantizeTest, Convert_4D_tensor_with_uint8_range_given) {
   TF_ASSERT_OK(
-      NodeDefBuilder("quantize_and_dequantize_op", "QuantizeAndDequantize")
+      NodeDefBuilder("quantize_and_dequantize_op", "QuantizeAndDequantizeV2")
           .Input(FakeInput(DT_FLOAT))
           .Input(FakeInput(DT_FLOAT))
           .Input(FakeInput(DT_FLOAT))
@@ -167,7 +179,7 @@ TEST_F(QuantizeAndDequantizeTest, Convert_4D_tensor_with_uint8_range_given) {
 // Convert a tensor with all 0.
 TEST_F(QuantizeAndDequantizeTest, Convert_tensor_with_all_0) {
   TF_ASSERT_OK(
-      NodeDefBuilder("quantize_and_dequantize_op", "QuantizeAndDequantize")
+      NodeDefBuilder("quantize_and_dequantize_op", "QuantizeAndDequantizeV2")
           .Input(FakeInput(DT_FLOAT))
           .Input(FakeInput(DT_FLOAT))
           .Input(FakeInput(DT_FLOAT))
@@ -189,7 +201,7 @@ TEST_F(QuantizeAndDequantizeTest, Convert_tensor_with_all_0) {
 // Range is invalid
 TEST_F(QuantizeAndDequantizeTest, Invalid_range_given) {
   TF_ASSERT_OK(
-      NodeDefBuilder("quantize_and_dequantize_Op", "QuantizeAndDequantize")
+      NodeDefBuilder("quantize_and_dequantize_Op", "QuantizeAndDequantizeV2")
           .Input(FakeInput(DT_FLOAT))
           .Input(FakeInput(DT_FLOAT))
           .Input(FakeInput(DT_FLOAT))
@@ -207,15 +219,15 @@ TEST_F(QuantizeAndDequantizeTest, Invalid_range_given) {
       << s;
 }
 
-#define BM_SIMPLE_QUAN_DEQUAN(DEVICE)                         \
-  static void BM_SIMPLE_QUAN_DEQUAN_##DEVICE(int iters) {     \
-    auto root = Scope::NewRootScope().ExitOnError();          \
-    ops::QuantizeAndDequantize(root, {-3.5}, {-3.5}, {-3.5}); \
-    TF_CHECK_OK(root.status());                               \
-    Graph* g = new Graph(OpRegistry::Global());               \
-    root.ToGraph(g);                                          \
-    test::Benchmark(#DEVICE, g).Run(iters);                   \
-  }                                                           \
+#define BM_SIMPLE_QUAN_DEQUAN(DEVICE)                           \
+  static void BM_SIMPLE_QUAN_DEQUAN_##DEVICE(int iters) {       \
+    auto root = Scope::NewRootScope().ExitOnError();            \
+    ops::QuantizeAndDequantizeV2(root, {-3.5}, {-3.5}, {-3.5}); \
+    TF_CHECK_OK(root.status());                                 \
+    Graph* g = new Graph(OpRegistry::Global());                 \
+    TF_CHECK_OK(root.ToGraph(g));                               \
+    test::Benchmark(#DEVICE, g).Run(iters);                     \
+  }                                                             \
   BENCHMARK(BM_SIMPLE_QUAN_DEQUAN_##DEVICE);
 
 BM_SIMPLE_QUAN_DEQUAN(cpu);

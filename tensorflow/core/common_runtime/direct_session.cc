@@ -271,7 +271,7 @@ DirectSession::DirectSession(const SessionOptions& options,
 }
 
 DirectSession::~DirectSession() {
-  if (!closed_) Close();
+  if (!closed_) Close().IgnoreError();
   for (auto& it : partial_runs_) {
     it.second.reset(nullptr);
   }
@@ -475,7 +475,8 @@ Status DirectSession::Run(const RunOptions& run_options,
   if (run_options.trace_level() >= RunOptions::HARDWARE_TRACE) {
     tracer.reset(CreateGPUTracer());
     // tracer will be NULL on non-GPU platforms.
-    if (tracer) tracer->Start();
+    // TODO(b/32704451): Don't just ignore the ::tensorflow::Status object!
+    if (tracer) tracer->Start().IgnoreError();
   }
 #endif  // GOOGLE_CUDA
 
@@ -514,8 +515,9 @@ Status DirectSession::Run(const RunOptions& run_options,
 
 #if GOOGLE_CUDA
   if (tracer) {
-    tracer->Stop();
-    tracer->Collect(args.stats_collector);
+    // TODO(b/32704451): Don't just ignore the ::tensorflow::Status object!
+    tracer->Stop().IgnoreError();
+    tracer->Collect(args.stats_collector).IgnoreError();
   }
 #endif  // GOOGLE_CUDA
 
@@ -1273,7 +1275,8 @@ void DirectSession::WaitForNotification(RunState* run_state,
 ::tensorflow::Status DirectSession::WaitForNotification(
     Notification* notification, int64 timeout_in_ms) {
   if (timeout_in_ms > 0) {
-    bool notified = WaitForNotificationWithTimeout(notification, timeout_in_ms);
+    int64 timeout_in_us = timeout_in_ms * 1000;
+    bool notified = WaitForNotificationWithTimeout(notification, timeout_in_us);
     if (!notified) {
       return Status(error::DEADLINE_EXCEEDED,
                     "Timed out waiting for notification");

@@ -4281,6 +4281,21 @@ output: The one-hot tensor.
 // EXPERIMENTAL. DO NOT USE OR DEPEND ON THIS YET.
 REGISTER_OP("QuantizeAndDequantize")
     .Input("input: T")
+    .Attr("signed_input: bool = true")
+    .Attr("num_bits: int = 8")
+    .Attr("range_given: bool = false")
+    .Attr("input_min: float = 0")
+    .Attr("input_max: float = 0")
+    .Output("output: T")
+    .Attr("T: {float, double}")
+    .SetShapeFn(shape_inference::UnchangedShape)
+    .Deprecated(22, "Replaced by QuantizeAndDequantizeV2")
+    .Doc(R"doc(
+Use QuantizeAndDequantizeV2 instead.
+)doc");
+
+REGISTER_OP("QuantizeAndDequantizeV2")
+    .Input("input: T")
     .Input("input_min: T")
     .Input("input_max: T")
     .Attr("signed_input: bool = true")
