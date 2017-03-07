@@ -1024,3 +1024,8 @@ def _CumprodGrad(op, grad):
   out = math_ops.cumsum(
       prod * grad, axis, exclusive=exclusive, reverse=not reverse)
   return [out / x, None]
+
+@ops.RegisterGradient("HardGate")
+def _HardGateGrad(op, grad):
+  # Straight-through estimator
+  return grad

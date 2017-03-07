@@ -131,6 +131,7 @@ See the @{$python/math_ops} guide.
 @@unique
 @@edit_distance
 @@invert_permutation
+@@hard_gate
 """
 from __future__ import absolute_import
 from __future__ import division
@@ -2301,3 +2302,24 @@ def tensordot(a, b, axes, name=None):
       b_free_dims = ops.convert_to_tensor(b_free_dims)
       return array_ops.reshape(
           ab_matmul, array_ops.concat([a_free_dims, b_free_dims], 0), name=name)
+
+def hard_gate(x, name=None):
+  """Returns an element-wise hard-gated values.
+
+  `y = 1` if `x > 0`; 0 if `x <= 0`.
+
+  Args:
+    x: A `Tensor` or `SparseTensor`. Must be one of the following types:
+      `float32`, `float64`, `int32`, `int64`.
+    name: A name for the operation (optional).
+
+  Returns:
+    A `Tensor` or `SparseTensor`, respectively. Has the same type as `x`.
+  """
+  with ops.name_scope(name, "HardGate", [x]) as name:
+    if isinstance(x, sparse_tensor.SparseTensor):
+      x_gated = gen_math_ops.hard_gate(x.values, name=name)
+      return sparse_tensor.SparseTensor(
+          indices=x.indices, values=x_gated, dense_shape=x.dense_shape)
+    else:
+      return gen_math_ops.hard_gate(x, name=name)

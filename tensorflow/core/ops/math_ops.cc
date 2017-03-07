@@ -2427,6 +2427,17 @@ output_max: the computed max output.
 
 )doc");
 
+REGISTER_OP("HardGate")
+  .Input("continuous_input: T")
+  .Output("binary_output: T")
+  .Attr("T: {half, float, double, int32, int64}")
+  .SetShapeFn(::tensorflow::shape_inference::UnchangedShape)
+  .Doc(R"doc(
+Compute the binary step function.
+
+`y = 0` if `x <= 0`; 1 if `x > 0`.
+)doc");
+
 // Deprecated ops:
 REGISTER_OP("BatchFFT")
     .Input("input: complex64")

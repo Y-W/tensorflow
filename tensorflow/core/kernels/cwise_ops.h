@@ -368,6 +368,28 @@ struct functor_traits<scalar_round_op_google<Scalar>> {
 #undef ENABLE_FLOAT_EQUALITY_WARNING
 #undef DISABLE_FLOAT_EQUALITY_WARNING
 
+template<typename T>
+struct scalar_hard_gate_op {
+  EIGEN_EMPTY_STRUCT_CTOR(scalar_hard_gate_op)
+  EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE const T
+  operator()(const T& a) const {
+    return (a > 0);
+  }
+  template <typename Packet>
+  EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE const Packet
+  packetOp(const Packet& a) const {
+    return (a > 0);
+  }
+};
+
+template <typename T>
+struct functor_traits<scalar_hard_gate_op<T>> {
+  enum {
+    Cost = NumTraits<T>::AddCost,
+    PacketAccess = packet_traits<T>::HasSign,
+  };
+};
+
 }  // end namespace internal
 }  // end namespace Eigen
 
@@ -543,6 +565,9 @@ struct round : base<T, Eigen::internal::scalar_round_op_google<T>> {};
 
 template <typename T>
 struct ceil : base<T, Eigen::internal::scalar_ceil_op<T>> {};
+
+template <typename T>
+struct hard_gate : base<T, Eigen::internal::scalar_hard_gate_op<T> > {};
 
 /** this should go in Eigen
   * \brief Template functor to compute the round to int value of a scalar

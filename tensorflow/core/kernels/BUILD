@@ -3630,6 +3630,7 @@ filegroup(
         "cwise_op_floor.cc",
         "cwise_op_greater.cc",
         "cwise_op_greater_equal.cc",
+        "cwise_op_hard_gate.cc",
         "cwise_op_isfinite.cc",
         "cwise_op_less.cc",
         "cwise_op_log.cc",

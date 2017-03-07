@@ -51,16 +51,6 @@ tf_py_test(
     data = [":invalid_op.so"],
 )
 
-tf_custom_op_library(
-    name = "hard_gate.so",
-    srcs = ["hard_gate.cc"],
-    gpu_srcs = ["hard_gate.cu.cc"],
-    hdrs = ["hard_gate.h",
-            "cwise_ops_common.h",
-            "cwise_ops_gpu_common.cu.h",
-           ],
-)
-
 filegroup(
     name = "all_files",
     srcs = glob(
@@ -72,4 +62,3 @@ filegroup(
     ),
     visibility = ["//tensorflow:__subpackages__"],
 )
-
