@@ -1028,4 +1028,8 @@ def _CumprodGrad(op, grad):
 @ops.RegisterGradient("HardGate")
 def _HardGateGrad(op, grad):
   # Straight-through estimator
-  return grad
+  x = op.inputs[0]
+  # Added control dependencies to prevent 2*x from being computed too early.
+  with ops.control_dependencies([grad.op]):
+    x = math_ops.hard_gate(1.0 - x) * math_ops.hard_gate(1.0 + x)
+    return grad * x
